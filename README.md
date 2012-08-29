@@ -19,4 +19,4 @@ c) Creating a couchbase view that can return all the documents, like this:
 
 By default, the view is named "_design/all/_view/all".
 
-You can change it by specifying the value of constant ALL_DOCS_VIEW_NAME. It will be called with __include_docs=true__
+You can change it by specifying the value of constant "ALL_DOCS_VIEW_NAME". It will be called with __include_docs=true__
