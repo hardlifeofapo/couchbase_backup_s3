@@ -25,20 +25,20 @@ S3_BUCKET_NAME = 'buck_up'
 SERVER_NAME = 'your_ip_goes_here'
 SERVER_PORT = '8091'
 ALL_DOCS_VIEW_NAME = '_design/all/_view/all'
-USERNAME = 'your_username' #couchbase username
-PASSWORD = 'your_password' #couchbase password
+USERNAME = 'your_couchbase_username' #couchbase username
+PASSWORD = 'your_couchbase_password' #couchbase password
 
 
 class Restorer(object):
     def __init__(self):
         # connect to a couchbase server and select bucket where docs are stored
         self.conn = S3Connection(ACCESS_KEY_ID, SECRET_ACCESS_KEY)
-        
-        #self.couchbase = Couchbase("%s:%s" % (SERVER_NAME, SERVER_PORT), username=USERNAME, password=PASSWORD)
-        #self.cb_bucket = self.couchbase[CB_BUCKET_NAME]
+        self.couchbase = Couchbase("%s:%s" % (SERVER_NAME, SERVER_PORT), username=USERNAME, password=PASSWORD)
+        self.cb_bucket = self.couchbase[CB_BUCKET_NAME]
         
         
     def run(self):
+        ini = int( time.time() )
         buckets = self.conn.get_all_buckets()
         bucketList = []
         
@@ -52,27 +52,21 @@ class Restorer(object):
         rs = s3_bucket.list()
         for key in rs:
            key = s3_bucket.get_key(key.name)
-           contents = key.get_contents_as_string()
-           #self.cb_bucket[key.name] = contents
+           contents = json.loads(key.get_contents_as_string())
+           
+           # See http://www.couchbase.com/issues/browse/MB-5302
+           del(contents['_id'])
+           del(contents['_rev'])
+           del(contents['$flags'])
+           del(contents['$expiration'])
+           print "Restoring %s"%(str(key.key))
+           
+           self.cb_bucket[str(key.key)] = json.dumps(contents)
 
-        '''
-        ini = int( time.time() )
-        items = self.cb_bucket.view(ALL_DOCS_VIEW_NAME, include_docs="true" )
-
-        # Create does not create again a bucket if that bucket already exists.
-        s3_bucket = self.conn.create_bucket(self.s3BucketName) 
-        
-        for item in items:
-            k = Key(s3_bucket)
-            k.key = item["doc"]["_id"]
-            print json.dumps(item["doc"], sort_keys=True) 
-            k.set_contents_from_string( json.dumps(item["doc"], sort_keys=True)  )
-        
         fin = int( time.time() )
         total = (fin - ini) #in seconds
-        
         print 'TIME:::%d' % (total)
-        '''
+
         
 def main():
     restorer = Restorer()
