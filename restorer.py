@@ -62,7 +62,7 @@ class Restorer(object):
                 #print design_doc
                 #print ""
                 # save a design document
-                #self.cb_bucket['_design/testing'] = json.dumps(design_doc)
+                self.cb_bucket[contents['_id']] = json.dumps(design_doc)
             except:
                 # See http://www.couchbase.com/issues/browse/MB-5302
                 del(contents['_id'])
