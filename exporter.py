@@ -23,8 +23,7 @@ ACCESS_KEY_ID = 'PUBLIC_KEY'
 SECRET_ACCESS_KEY = 'PRIVATE_KEY'
 CB_BUCKET_NAME = 'default'
 S3_BUCKET_NAME = 'buck_up'
-SERVER_NAME = '176.58.119.212'
-SERVER_PORT = '8091'
+SERVER_NAME = 'localhost'
 
 
 class Exporter(object):
@@ -37,11 +36,11 @@ class Exporter(object):
     def run(self):
         ini = int( time.time() )
         url = '/usr/bin/curl http://%s:%s/%s/_all_docs?include_docs=true'% (SERVER_NAME, 8092, CB_BUCKET_NAME )
+        print url
         p = subprocess.Popen(url, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         output, errors = p.communicate()
         output = json.loads(output)
         items = output['rows']
-
 
         # Create does not create again a bucket if that bucket already exists.
         s3_bucket = self.conn.create_bucket(self.s3BucketName) 
@@ -50,7 +49,7 @@ class Exporter(object):
             k = Key(s3_bucket)
             k.key = item["doc"]["_id"]
             print "Saving %s" % (item["doc"]["_id"])
-            # json.dumps is needed to prevent unicode representation of strings in python, like u'a_string'
+            # json.dumps is needed to prevent storage of python's unicode representation of strings, like u'a_string'
             k.set_contents_from_string( json.dumps(item["doc"], sort_keys=True)  )
 
         fin = int( time.time() )

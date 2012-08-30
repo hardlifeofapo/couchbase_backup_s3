@@ -22,9 +22,9 @@ ACCESS_KEY_ID = 'PUBLIC_KEY'
 SECRET_ACCESS_KEY = 'PRIVATE_KEY'
 CB_BUCKET_NAME = 'default'
 S3_BUCKET_NAME = 'buck_up'
-SERVER_NAME = 'your_ip_goes_here'
+SERVER_NAME = 'your_server_ip_goes_here'
 SERVER_PORT = '8091'
-USERNAME = 'your_couchbase_username' #couchbase username
+USERNAME = 'your_couchbase_user' #couchbase username
 PASSWORD = 'your_couchbase_password' #couchbase password
 
 
@@ -50,17 +50,29 @@ class Restorer(object):
 
         rs = s3_bucket.list()
         for key in rs:
-           key = s3_bucket.get_key(key.name)
-           contents = json.loads(key.get_contents_as_string())
+            key = s3_bucket.get_key(key.name)
+            contents = json.loads(key.get_contents_as_string())
 
-           # See http://www.couchbase.com/issues/browse/MB-5302
-           del(contents['_id'])
-           del(contents['_rev'])
-           del(contents['$flags'])
-           del(contents['$expiration'])
-           print "Restoring %s"%(str(key.key))
-           
-           self.cb_bucket[str(key.key)] = json.dumps(contents)
+            print contents
+
+            try:
+                # Try to restore a view. I have no idea on how to do this
+                design_doc = { "views": json.dumps(contents['views']) }
+                #print "design document"
+                #print design_doc
+                #print ""
+                # save a design document
+                #self.cb_bucket['_design/testing'] = json.dumps(design_doc)
+            except:
+                # See http://www.couchbase.com/issues/browse/MB-5302
+                del(contents['_id'])
+                del(contents['_rev'])
+                del(contents['$flags'])
+                del(contents['$expiration'])
+            
+                print "Restoring document: %s"%(str(key.key))
+
+                self.cb_bucket[str(key.key)] = json.dumps(contents)
 
         fin = int( time.time() )
         total = (fin - ini) #in seconds
